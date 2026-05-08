@@ -1,6 +1,7 @@
 import requests
 import json
 import time
+import csv
 
 URL = "https://justjoin.it/api/candidate-api/offers"
 
@@ -60,39 +61,24 @@ def parse_job(job):
     category = job.get("category", {})
 
     return {
-        # =========================
-        # IDENTYFIKACJA
-        # =========================
         "id": job.get("guid"),
         "slug": job.get("slug"),
         "url": "https://justjoin.it/offers/" + job.get("slug", ""),
 
-        # =========================
-        # PODSTAWY
-        # =========================
         "title": job.get("title"),
         "company": job.get("companyName"),
         "experience_level": job.get("experienceLevel"),
         "working_time": job.get("workingTime"),
         "workplace_type": job.get("workplaceType"),
 
-        # =========================
-        # LOKALIZACJA
-        # =========================
         "city": job.get("city"),
         "street": job.get("street"),
         "latitude": job.get("latitude"),
         "longitude": job.get("longitude"),
 
-        # =========================
-        # KATEGORIE
-        # =========================
         "category": category.get("key"),
         "parent_category": category.get("parentKey"),
 
-        # =========================
-        # SALARY
-        # =========================
         "salary_min": salary.get("from") if salary else None,
         "salary_max": salary.get("to") if salary else None,
 
@@ -109,9 +95,6 @@ def parse_job(job):
         "employment_type": salary.get("type") if salary else None,
         "gross": salary.get("gross") if salary else None,
 
-        # =========================
-        # SKILLS
-        # =========================
         "required_skills": ", ".join(
             [s["name"] for s in required_skills]
         ) if required_skills else None,
@@ -120,16 +103,10 @@ def parse_job(job):
             [s["name"] for s in nice_to_have]
         ) if nice_to_have else None,
 
-        # =========================
-        # JĘZYKI
-        # =========================
         "languages": ", ".join(
             [f'{l["code"]}:{l["level"]}' for l in languages]
         ) if languages else None,
 
-        # =========================
-        # META
-        # =========================
         "published_at": job.get("publishedAt"),
         "expired_at": job.get("expiredAt"),
         "remote_interview": job.get("isRemoteInterview"),
@@ -143,6 +120,20 @@ def parse_job(job):
 def save_json(data, filename="jobs.json"):
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def save_csv(data, filename="jobs.csv"):
+
+    if not data:
+        return
+
+    keys = data[0].keys()
+
+    with open(filename, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=keys)
+
+        writer.writeheader()
+        writer.writerows(data)
 
 
 def main():
@@ -190,6 +181,7 @@ def main():
 
         # checkpoint save
         save_json(all_jobs)
+        save_csv(all_jobs)
 
         # kolejna strona
         cursor += ITEMS_PER_PAGE
@@ -199,6 +191,7 @@ def main():
 
     # final save
     save_json(all_jobs)
+    save_csv(all_jobs)
 
     print("\nDONE")
     print(f"Finalnie zapisano {len(all_jobs)} ofert")
