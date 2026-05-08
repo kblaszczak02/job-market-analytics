@@ -95,6 +95,15 @@ def parse_job(job):
         # =========================
         "salary_min": salary.get("from") if salary else None,
         "salary_max": salary.get("to") if salary else None,
+
+        "salary_avg": (
+            (salary.get("from") + salary.get("to")) / 2
+            if salary
+            and salary.get("from") is not None
+            and salary.get("to") is not None
+            else None
+        ),
+
         "salary_currency": salary.get("currency") if salary else None,
         "salary_unit": salary.get("unit") if salary else None,
         "employment_type": salary.get("type") if salary else None,
